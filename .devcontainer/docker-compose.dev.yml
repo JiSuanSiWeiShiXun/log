@@ -1,0 +1,9 @@
+# encoding: utf-8
+services:
+  log:
+    image: golang:1.19
+    container_name: log-dev
+    command: tail -f /dev/null
+    volumes:
+      - ../:/home/log/
+    network_mode: bridge
