@@ -37,7 +37,7 @@ func init() {
 
 		// log rotate
 		l := &lumberjack.Logger{
-			Filename:   fmt.Sprintf("log/%v.log", Role),
+			Filename:   fmt.Sprintf("logs/%v.log", Role),
 			MaxSize:    100,   //512M一个文件
 			MaxBackups: 5,     //最大备份个数
 			MaxAge:     7,     //最大保留天数
