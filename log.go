@@ -8,19 +8,17 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
-	Logger *logrus.Logger
-	once   sync.Once
-	Role   = "original"
+	Logger           *logrus.Logger // 可以自己获取这个Logger更新里面的设置
+	LumberjackLogger *lumberjack.Logger
+	once             sync.Once
+	Role             = "original"
 )
 
 func init() {
@@ -36,7 +34,7 @@ func init() {
 		})
 
 		// log rotate
-		l := &lumberjack.Logger{
+		LumberjackLogger = &lumberjack.Logger{
 			Filename:   fmt.Sprintf("logs/%v.log", Role),
 			MaxSize:    100,   //512M一个文件
 			MaxBackups: 5,     //最大备份个数
@@ -44,27 +42,7 @@ func init() {
 			Compress:   false, //归档压缩
 			LocalTime:  true,  //rotate的文件后缀名使用的时区，默认为utc
 		}
-		mo := io.MultiWriter(l, os.Stdout)
+		mo := io.MultiWriter(LumberjackLogger, os.Stdout)
 		Logger.SetOutput(mo)
-
-		// [feature] 如何让机器按小时/天rotate
-		go func() {
-			for {
-				select {
-				case <-time.After(time.Minute):
-					l.Rotate()
-				}
-			}
-		}()
-
-		// [feature] 如何按照启动时间rotate
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGHUP)
-		go func() {
-			for {
-				<-c
-				l.Rotate()
-			}
-		}()
 	})
 }
