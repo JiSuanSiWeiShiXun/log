@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -31,6 +33,11 @@ func init() {
 			ForceColors:     true,                  // 显示终端色彩
 			FullTimestamp:   true,                  // 设置ForceColors后，必须设置这个，不然不显示时间
 			TimestampFormat: "2006-01-02 15:04:05", // 显示时间格式
+			CallerPrettyfier: func(fr *runtime.Frame) (function string, file string) { // 简化文件名
+				function = fr.Function
+				file = fmt.Sprintf("%s:%d", filepath.Base(fr.File), fr.Line)
+				return
+			},
 		})
 
 		// log rotate
@@ -45,4 +52,20 @@ func init() {
 		mo := io.MultiWriter(LumberjackLogger, os.Stdout)
 		Logger.SetOutput(mo)
 	})
+}
+
+func fileInfo(skip int) string {
+	// 找到封装的日志入口的上一级调用栈
+	_, file, line, ok := runtime.Caller(skip)
+	if !ok {
+		file = "<???>"
+		line = 0
+	} else {
+		// slash := strings.LastIndex(file, "/")
+		// if slash >= 0 {
+		// 	file = file[slash+1:]
+		// }
+		file = filepath.Base(file)
+	}
+	return fmt.Sprintf("%s:%d", file, line)
 }
